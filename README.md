@@ -7,7 +7,7 @@ A LIFO (last in, first out) Objective-C implementation of [Apple's NSOperationQu
 Interface
 =========
 
-`CBOperationStack` has the same interface as [`NSOperationQueue`](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/NSOperationQueue_class/Reference/Reference.html) with the difference that operations are (roughly) run a last in, first out order as opposed to `NSOperationQueue`'s first in, first out order. 
+`CBOperationStack` has the same interface as [`NSOperationQueue`](https://developer.apple.com/library/mac/#documentation/Cocoa/Reference/NSOperationQueue_class/Reference/Reference.html) with the difference that operations are (roughly) run in a last in, first out order as opposed to `NSOperationQueue`'s first in, first out order. 
 
 The other difference from `NSOperationQueue` is the addition of one method:
 
