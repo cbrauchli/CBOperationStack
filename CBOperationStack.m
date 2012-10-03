@@ -52,24 +52,28 @@ inline static void ClearQueues(NSArray *queues)
 
 - (id)init
 {
-  workAvailable = [[NSCondition alloc] init];
-  suspendedCondition = [[NSCondition alloc] init];
-  allWorkDone = [[NSCondition alloc] init];
-  isSuspended = NO;
-  
-  maxConcurrentOperationCount = 1;
-  
-  NSMutableArray *queuesTemp = [NSMutableArray arrayWithCapacity:NSOperationQueuePriorityCount];
-  for (NSUInteger i=0; i < NSOperationQueuePriorityCount; i++) {
-    NSMutableArray *queue = [NSMutableArray array];
-    [queuesTemp addObject:queue];
+  self = [super init];
+
+  if (self) {
+    workAvailable = [[NSCondition alloc] init];
+    suspendedCondition = [[NSCondition alloc] init];
+    allWorkDone = [[NSCondition alloc] init];
+    isSuspended = NO;
+
+    maxConcurrentOperationCount = 1;
+
+    NSMutableArray *queuesTemp = [NSMutableArray arrayWithCapacity:NSOperationQueuePriorityCount];
+    for (NSUInteger i=0; i < NSOperationQueuePriorityCount; i++) {
+      NSMutableArray *queue = [NSMutableArray array];
+      [queuesTemp addObject:queue];
+    }
+    queues = queuesTemp;
+
+    NSThread *thread = [[NSThread alloc] initWithTarget:self selector:@selector(_workThread) object:nil];
+    thread.name = @"Thread 0";
+    _threads = [NSMutableArray arrayWithObject:thread];
+    [thread start];
   }
-  queues = queuesTemp;
-  
-  NSThread *thread = [[NSThread alloc] initWithTarget:self selector:@selector(_workThread) object:nil];
-  thread.name = @"Thread 0";
-  _threads = [NSMutableArray arrayWithObject:thread];
-  [thread start];
   
 	return self;
 }
