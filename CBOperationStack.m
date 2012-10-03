@@ -213,7 +213,7 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (NSArray *)operations
 {
-	NSMutableArray *operations = [NSMutableArray arrayWithCapacity:operationCount];
+	NSMutableArray *operations = [NSMutableArray arrayWithCapacity:[self operationCount]];
 	@synchronized(self) {
     for (NSMutableArray *queue in queues) {
       [operations addObjectsFromArray:queue];
