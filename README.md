@@ -13,6 +13,6 @@ The other difference from `NSOperationQueue` is the addition of one method:
 
     - (void)addOperationAtBottomOfStack:(NSOperation *)op;
 
-which effectively allows you to use `CBOperationStack` as a queue. 
+which effectively allows you to use `CBOperationStack` as a queue as well.
 
 `CBOperationStack` does not implement either the `+ (id)currentQueue` or `+ (id)mainQueue` methods yet.
