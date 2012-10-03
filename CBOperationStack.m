@@ -59,16 +59,16 @@ inline static void ClearQueues(NSArray *queues)
     suspendedCondition = [[NSCondition alloc] init];
     allWorkDone = [[NSCondition alloc] init];
     isSuspended = NO;
-
+    
     maxConcurrentOperationCount = 1;
-
+    
     NSMutableArray *queuesTemp = [NSMutableArray arrayWithCapacity:NSOperationQueuePriorityCount];
     for (NSUInteger i=0; i < NSOperationQueuePriorityCount; i++) {
       NSMutableArray *queue = [NSMutableArray array];
       [queuesTemp addObject:queue];
     }
     queues = queuesTemp;
-
+    
     NSThread *thread = [[NSThread alloc] initWithTarget:self selector:@selector(_workThread) object:nil];
     thread.name = @"Thread 0";
     _threads = [NSMutableArray arrayWithObject:thread];
@@ -272,52 +272,16 @@ inline static NSUInteger getPriority(NSOperation *op)
   }
 }
 
-// pop an operation from the given list and run it
-// if the list is empty, steal the source list into the given list and run an operation from it
-// if both are empty, do nothing
-// returns YES if an operation was executed, NO otherwise
-// - (BOOL)_runOperationFromList: (NSAtomicListRef *)listPtr sourceList: (NSAtomicListRef *)sourceListPtr
-//static BOOL RunOperationFromLists( NSAtomicListRef *listPtr, NSAtomicListRef *sourceListPtr, CBOperationStack *opstack )
-inline static BOOL _runOperationFromLists(NSMutableArray *queue, NSMutableArray *sourceQueue, CBOperationStack *opstack)
-{
-	NSOperation *op = nil;
-	@synchronized(opstack) {
-    op = [queue CBpopObject];
-		if(!op) {
-			op = [sourceQueue CBpopObject];
-		}
-	}
-	if (op) {
-		if ([op isReady]) {
-			[op start];
-		} else {
-			@synchronized(opstack) {
-        [sourceQueue addObject:op];
-			}
-		}
-	}
-	
-	return op != nil;
-}
-
 - (void)_workThread
 {
 	NSThread *thread = [NSThread currentThread];
-	
-  NSMutableArray *myQueues = [NSMutableArray arrayWithCapacity:NSOperationQueuePriorityCount];
-  for (NSUInteger i=0; i<NSOperationQueuePriorityCount; i++) {
-    NSMutableArray *queue = [NSMutableArray array];
-    [myQueues addObject:queue];
-  }
 	
 	BOOL didRun = NO;
 	while(![thread isCancelled])
 	{
 		[suspendedCondition lock];
-    
 		while (isSuspended)
       [suspendedCondition wait];
-    
 		[suspendedCondition unlock];
 		
 		if(!didRun) {
@@ -335,26 +299,29 @@ inline static BOOL _runOperationFromLists(NSMutableArray *queue, NSMutableArray 
 			[workAvailable unlock];
 		}
 		
-		for (NSUInteger i=0; i < NSOperationQueuePriorityCount; i++) {
-      didRun = _runOperationFromLists([myQueues objectAtIndex:i], [queues objectAtIndex:i], self);
-			if (didRun)
-        break;
-		}
+    if (![thread isCancelled]) {
+      NSOperation *op = nil;
+      @synchronized(self) {
+        for (NSMutableArray *queue in queues) {
+          op = [queue lastObject];
+          if (op && [op isReady]) {
+            [queue removeLastObject];
+            break;
+          }
+          else {
+            op = nil;
+          }
+        }
+      }
+
+      if (op) {
+        [op start];
+        didRun = YES;
+      }
+    }
   }
 	
-	// This thread got cancelled, so insert all of its operations back into the main queue.
-	// The thread pool could have been reduced and then other threads should do this thread's work.
-	@synchronized(self) {
-		for (NSUInteger i=0; i < NSOperationQueuePriorityCount; i++) {
-			id op = nil;
-      NSMutableArray *myQueue = [myQueues objectAtIndex:i];
-      NSMutableArray *queue = [queues objectAtIndex:i];
-			while ((op = [myQueue CBpopObject])) {
-        [queue addObject:op];
-			}
-		}
-		ClearQueues(myQueues);
-	}
+	// If we get here, this thread got cancelled
 }
 
 
