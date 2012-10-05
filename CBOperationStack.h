@@ -11,11 +11,11 @@
 
 @interface CBOperationStack : NSObject
 
-@property (nonatomic, copy) NSString *name;
-@property (readonly) NSArray *operations;
-@property (nonatomic, assign) NSInteger maxConcurrentOperationCount;
-@property (atomic, readonly) NSUInteger operationCount;
-@property (assign, getter = isSuspended) BOOL suspended;
+@property (nonatomic, copy)              NSString   * name;
+@property (readonly)                     NSArray    * operations;
+@property (readonly)                     NSUInteger   operationCount;
+@property (nonatomic, assign)            NSInteger    maxConcurrentOperationCount;
+@property (assign, getter = isSuspended) BOOL         suspended;
 
 - (void)addOperation:(NSOperation *)op;
 - (void)addOperationWithBlock:(void (^)(void))block;
