@@ -113,7 +113,7 @@ inline static void ClearQueues(NSArray *queues)
 {
 	[self stop];
 	
-	ClearQueues(queues);
+//	ClearQueues(queues);
 }
 
 inline static NSUInteger getPriority(NSOperation *op)
@@ -213,7 +213,7 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (NSArray *)operations
 {
-	NSMutableArray *operations = [NSMutableArray arrayWithCapacity:operationCount];
+	NSMutableArray *operations = [NSMutableArray arrayWithCapacity:[self operationCount]];
 	@synchronized(self) {
     for (NSMutableArray *queue in queues) {
       [operations addObjectsFromArray:queue];
@@ -317,6 +317,9 @@ inline static NSUInteger getPriority(NSOperation *op)
       if (op) {
         [op start];
         didRun = YES;
+      }
+      else {
+        didRun = NO;
       }
     }
   }
