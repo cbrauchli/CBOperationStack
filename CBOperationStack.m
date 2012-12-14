@@ -70,7 +70,7 @@ inline static void ClearQueues(NSArray *queues)
     queues = queuesTemp;
     
     NSThread *thread = [[NSThread alloc] initWithTarget:self selector:@selector(_workThread) object:nil];
-    thread.name = @"Thread 0";
+    thread.name = @"com.CBOperationStack.thread-0";
     _threads = [NSMutableArray arrayWithObject:thread];
     [thread start];
   }
@@ -194,7 +194,7 @@ inline static NSUInteger getPriority(NSOperation *op)
     
     while (difference > 0) {
       NSThread *thread = [[NSThread alloc] initWithTarget:self selector:@selector(_workThread) object:nil];
-      thread.name = [NSString stringWithFormat:@"Thread %d", _threads.count];
+      thread.name = [NSString stringWithFormat:@"com.CBOperationStack.thread-%d", _threads.count];
       [_threads addObject:thread];
       [thread start];
       difference--;
