@@ -35,11 +35,11 @@ inline static void ClearQueues(NSArray *queues)
 
 
 @implementation CBOperationStack {
-  NSCondition *workAvailable;
-  NSCondition *suspendedCondition;
-  NSCondition *allWorkDone;
-  
-  NSArray *queues;
+	NSCondition *workAvailable;
+	NSCondition *suspendedCondition;
+	NSCondition *allWorkDone;
+	
+	NSArray *queues;
   NSMutableArray *_threads;
 }
 
@@ -55,11 +55,11 @@ inline static void ClearQueues(NSArray *queues)
   self = [super init];
 
   if (self) {
-    isSuspended        = NO;
-    workAvailable      = [[NSCondition alloc] init];
+    workAvailable = [[NSCondition alloc] init];
     suspendedCondition = [[NSCondition alloc] init];
-    allWorkDone        = [[NSCondition alloc] init];
-
+    allWorkDone = [[NSCondition alloc] init];
+    isSuspended = NO;
+    
     maxConcurrentOperationCount = 1;
     
     NSMutableArray *queuesTemp = [NSMutableArray arrayWithCapacity:NSOperationQueuePriorityCount];
@@ -75,25 +75,25 @@ inline static void ClearQueues(NSArray *queues)
     [thread start];
   }
   
-  return self;
+	return self;
 }
 
 #pragma mark - Suspension
 - (void)resume
 {
   [suspendedCondition lock];
-  if (isSuspended) {
-    isSuspended = NO;
-    [suspendedCondition broadcast];
+	if (isSuspended) {
+		isSuspended = NO;
+		[suspendedCondition broadcast];
   }
-  [suspendedCondition unlock];
+	[suspendedCondition unlock];
 }
 
 - (void)suspend
 {
-  [suspendedCondition lock];
-  isSuspended = YES;
-  [suspendedCondition unlock];
+	[suspendedCondition lock];
+	isSuspended = YES;
+	[suspendedCondition unlock];
 }
 
 
@@ -102,18 +102,18 @@ inline static void ClearQueues(NSArray *queues)
   for (NSThread *thread in _threads) {
     [thread cancel];
   }
-  [self resume];
+	[self resume];
   [workAvailable lock];
-  [workAvailable broadcast];
+	[workAvailable broadcast];
   [workAvailable unlock];
 }
 
 
 - (void)dealloc
 {
-  [self stop];
-  
-  ClearQueues(queues);
+	[self stop];
+	
+//	ClearQueues(queues);
 }
 
 inline static NSUInteger getPriority(NSOperation *op)
@@ -144,12 +144,12 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (void)addOperation:(NSOperation *)op
 {
-  NSUInteger priority = getPriority(op);
+	NSUInteger priority = getPriority(op);
   [workAvailable lock];
   @synchronized(self) {
     [[queues objectAtIndex:priority] addObject:op];
   }
-  [workAvailable signal];
+	[workAvailable signal];
   [workAvailable unlock];
 }
 
@@ -181,14 +181,11 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (void)cancelAllOperations
 {
-  [[self operations] makeObjectsPerformSelector:@selector(cancel)];
+	[[self operations] makeObjectsPerformSelector:@selector(cancel)];
 }
 
 - (void)setMaxConcurrentOperationCount:(NSInteger)count
 {
-  // Apple's NSOperationQueue uses NSOperationQueueDefaultMaxConcurrentOperationCount to mean a dynamic count
-  // that changes based on system conditions. For simplicity, I just set 
-  // NSOperationQueueDefaultMaxConcurrentOperationCount to 1.
   if (count < 0 || count == NSOperationQueueDefaultMaxConcurrentOperationCount) maxConcurrentOperationCount = 1;
   else maxConcurrentOperationCount = count;
   
@@ -216,13 +213,13 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (NSArray *)operations
 {
-  NSMutableArray *operations = [NSMutableArray arrayWithCapacity:[self operationCount]];
-  @synchronized(self) {
+	NSMutableArray *operations = [NSMutableArray arrayWithCapacity:[self operationCount]];
+	@synchronized(self) {
     for (NSMutableArray *queue in queues) {
       [operations addObjectsFromArray:queue];
-    }
-  }
-  return operations;
+		}
+	}
+	return operations;
 }
 
 - (NSUInteger)operationCount
@@ -237,17 +234,17 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (BOOL)isSuspended
 {
-  [suspendedCondition lock];
-  BOOL result = isSuspended;
-  [suspendedCondition unlock];
-  return result;
+	[suspendedCondition lock];
+	BOOL result = isSuspended;
+	[suspendedCondition unlock];
+	return result;
 }
 
 -(void)setSuspended:(BOOL)suspend
 {
-  if (suspend)
+	if (suspend)
     [self suspend];
-  else
+	else
     [self resume];
 }
 
@@ -257,7 +254,7 @@ inline static NSUInteger getPriority(NSOperation *op)
     if (queue.count > 0)
       return YES;
   
-  return NO;
+	return NO;
 }
 
 -(void)waitUntilAllOperationsAreFinished
@@ -277,18 +274,18 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (void)_workThread
 {
-  NSThread *thread = [NSThread currentThread];
-  
-  BOOL didRun = NO;
-  while(![thread isCancelled])
-  {
-    [suspendedCondition lock];
-    while (isSuspended)
+	NSThread *thread = [NSThread currentThread];
+	
+	BOOL didRun = NO;
+	while(![thread isCancelled])
+	{
+		[suspendedCondition lock];
+		while (isSuspended)
       [suspendedCondition wait];
-    [suspendedCondition unlock];
-    
-    if(!didRun) {
-      [workAvailable lock];
+		[suspendedCondition unlock];
+		
+		if(!didRun) {
+			[workAvailable lock];
       
       if(![self hasMoreWork]){
         [allWorkDone lock];
@@ -296,12 +293,12 @@ inline static NSUInteger getPriority(NSOperation *op)
         [allWorkDone unlock];
       }
       
-      while (![self hasMoreWork] && ![thread isCancelled])
+			while (![self hasMoreWork] && ![thread isCancelled])
         [workAvailable wait];
       
-      [workAvailable unlock];
-    }
-    
+			[workAvailable unlock];
+		}
+		
     if (![thread isCancelled]) {
       NSOperation *op = nil;
       @synchronized(self) {
@@ -321,10 +318,13 @@ inline static NSUInteger getPriority(NSOperation *op)
         [op start];
         didRun = YES;
       }
+      else {
+        didRun = NO;
+      }
     }
   }
-  
-  // If we get here, this thread got cancelled
+	
+	// If we get here, this thread got cancelled
 }
 
 
