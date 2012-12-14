@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
 
   s.homepage  = 'https://github.com/cbrauchli/CBOperationStack'
   s.authors   = { 'Chris Brauchli' => 'chris@brauchli.me' }
-  s.source   = { :git => 'git@github.com:cbrauchli/CBOperationStack.git', :tag => '7780fb521b' }
+  s.source   = { :git => 'git@github.com:cbrauchli/CBOperationStack.git', :tag => '0.1.1' }
 
   s.platform  = :ios
   s.requires_arc = true
