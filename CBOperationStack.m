@@ -274,52 +274,54 @@ inline static NSUInteger getPriority(NSOperation *op)
 
 - (void)_workThread
 {
-	NSThread *thread = [NSThread currentThread];
-	
-	BOOL didRun = NO;
-	while(![thread isCancelled])
-	{
-		[suspendedCondition lock];
-		while (isSuspended)
-      [suspendedCondition wait];
-		[suspendedCondition unlock];
-		
-		if(!didRun) {
-			[workAvailable lock];
+  @autoreleasepool {
+    NSThread *thread = [NSThread currentThread];
+    
+    BOOL didRun = NO;
+    while(![thread isCancelled])
+    {
+      [suspendedCondition lock];
+      while (isSuspended)
+        [suspendedCondition wait];
+      [suspendedCondition unlock];
       
-      if(![self hasMoreWork]){
-        [allWorkDone lock];
-        [allWorkDone broadcast];
-        [allWorkDone unlock];
+      if(!didRun) {
+        [workAvailable lock];
+        
+        if(![self hasMoreWork]){
+          [allWorkDone lock];
+          [allWorkDone broadcast];
+          [allWorkDone unlock];
+        }
+        
+        while (![self hasMoreWork] && ![thread isCancelled])
+          [workAvailable wait];
+        
+        [workAvailable unlock];
       }
       
-			while (![self hasMoreWork] && ![thread isCancelled])
-        [workAvailable wait];
-      
-			[workAvailable unlock];
-		}
-		
-    if (![thread isCancelled]) {
-      NSOperation *op = nil;
-      @synchronized(self) {
-        for (NSMutableArray *queue in queues) {
-          op = [queue lastObject];
-          if (op && [op isReady]) {
-            [queue removeLastObject];
-            break;
-          }
-          else {
-            op = nil;
+      if (![thread isCancelled]) {
+        NSOperation *op = nil;
+        @synchronized(self) {
+          for (NSMutableArray *queue in queues) {
+            op = [queue lastObject];
+            if (op && [op isReady]) {
+              [queue removeLastObject];
+              break;
+            }
+            else {
+              op = nil;
+            }
           }
         }
-      }
 
-      if (op) {
-        [op start];
-        didRun = YES;
-      }
-      else {
-        didRun = NO;
+        if (op) {
+          [op start];
+          didRun = YES;
+        }
+        else {
+          didRun = NO;
+        }
       }
     }
   }
