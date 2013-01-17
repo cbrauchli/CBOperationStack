@@ -20,7 +20,6 @@
 - (void)addOperation:(NSOperation *)op;
 - (void)addOperationWithBlock:(void (^)(void))block;
 - (void)addOperations:(NSArray *)ops waitUntilFinished:(BOOL)wait;
-- (void)addOperationWithBlock:(void (^)(void))block;
 - (void)addOperationAtBottomOfStack:(NSOperation *)op;
 
 - (void)cancelAllOperations;
